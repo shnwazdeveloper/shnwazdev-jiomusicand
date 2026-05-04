@@ -1,4 +1,5 @@
 const form = document.querySelector("#search-form");
+const endpointInput = document.querySelector("#endpoint");
 const queryInput = document.querySelector("#query");
 const detailsInput = document.querySelector("#details");
 const resultStatus = document.querySelector("#result-status");
@@ -8,10 +9,10 @@ const resultOutput = document.querySelector("#result-output");
 function searchUrl() {
   const params = new URLSearchParams();
   params.set("query", queryInput.value.trim());
-  if (detailsInput.checked) {
+  if (detailsInput.checked && endpointInput.value !== "/api/raw/autocomplete") {
     params.set("details", "true");
   }
-  return `/api/search?${params.toString()}`;
+  return `${endpointInput.value}?${params.toString()}`;
 }
 
 async function runSearch(event) {

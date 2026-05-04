@@ -5,8 +5,11 @@ Clean Flask API and documentation website for the legacy JioMusic search API. Th
 ## What is included
 
 - Documentation homepage at `/` and `/docs`
+- Endpoint index at `/api`
 - Modern search endpoint at `/api/search`
-- Health endpoint at `/api/health`
+- Category endpoints for songs, albums, playlists, artists, top results, shows, and episodes
+- Raw autocomplete endpoint at `/api/raw/autocomplete`
+- Health endpoints at `/api/health` and `/health`
 - Legacy compatibility route at `/result/`
 - Vercel-ready Flask entrypoint in `app.py`
 - Local development port set to `5575`
@@ -25,7 +28,17 @@ Open `http://localhost:5575`.
 
 ## API
 
-### Search
+All endpoints accept `query` or `q` where search text is needed.
+
+### Endpoint index
+
+```http
+GET /api
+```
+
+Returns service metadata and every documented endpoint.
+
+### Search all categories
 
 ```http
 GET /api/search?query=slow%20motion
@@ -33,13 +46,31 @@ GET /api/search?query=slow%20motion
 
 Optional parameters:
 
-- `query` or `q`: song, album, or playlist search text
+- `query` or `q`: song, album, artist, playlist, show, or episode search text
 - `details=true`: include album and playlist track lists
 
-Example:
+### Category endpoints
 
-```powershell
-curl "http://localhost:5575/api/search?query=slow%20motion"
+```http
+GET /api/songs?query=slow%20motion
+GET /api/albums?query=slow%20motion
+GET /api/playlists?query=bollywood
+GET /api/artists?query=arijit%20singh
+GET /api/top?query=slow%20motion
+GET /api/shows?query=music
+GET /api/episodes?query=music
+```
+
+Each category endpoint returns:
+
+```json
+{
+  "ok": true,
+  "query": "slow motion",
+  "category": "songs",
+  "count": 5,
+  "data": []
+}
 ```
 
 ### Health
@@ -53,6 +84,14 @@ Use `upstream=true` to include a live upstream check:
 ```powershell
 curl "http://localhost:5575/api/health?upstream=true"
 ```
+
+### Raw autocomplete
+
+```http
+GET /api/raw/autocomplete?query=slow%20motion
+```
+
+Returns the unmodified upstream autocomplete response.
 
 ### Legacy route
 
@@ -81,6 +120,7 @@ After deployment, check:
 ```text
 https://your-project.vercel.app/api/health
 https://your-project.vercel.app/api/search?query=slow%20motion
+https://your-project.vercel.app/api
 ```
 
 ## Notes

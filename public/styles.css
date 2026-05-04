@@ -126,6 +126,7 @@ main {
 
 h1,
 h2,
+h3,
 p {
   overflow-wrap: anywhere;
 }
@@ -142,6 +143,13 @@ h2 {
   margin: 0;
   font-size: 2.45rem;
   line-height: 1.08;
+  letter-spacing: 0;
+}
+
+h3 {
+  margin: 0;
+  font-size: 1.08rem;
+  line-height: 1.25;
   letter-spacing: 0;
 }
 
@@ -298,12 +306,22 @@ pre {
 
 .input-row {
   display: grid;
-  grid-template-columns: minmax(220px, 1fr) auto auto;
+  grid-template-columns: minmax(160px, 0.55fr) minmax(220px, 1fr) auto auto;
   gap: 12px;
-  align-items: center;
+  align-items: end;
 }
 
-input[type="search"] {
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 0.88rem;
+  font-weight: 800;
+}
+
+input[type="search"],
+select {
   width: 100%;
   min-height: 46px;
   border: 1px solid var(--line);
@@ -314,7 +332,16 @@ input[type="search"] {
   background: var(--paper);
 }
 
-input[type="search"]:focus {
+select {
+  appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+  background-position: calc(100% - 18px) 20px, calc(100% - 12px) 20px;
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
+}
+
+input[type="search"]:focus,
+select:focus {
   border-color: var(--green);
   outline: 3px solid rgba(31, 122, 77, 0.14);
 }
@@ -416,6 +443,27 @@ input[type="search"]:focus {
 .endpoint-card pre {
   margin-top: auto;
   font-size: 0.82rem;
+}
+
+.endpoint-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  min-height: 38px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 9px 12px;
+  color: var(--green-dark);
+  font-size: 0.88rem;
+  font-weight: 900;
+  background: var(--paper);
+}
+
+.endpoint-link:hover,
+.endpoint-link:focus-visible {
+  border-color: var(--green);
+  outline: none;
 }
 
 footer {

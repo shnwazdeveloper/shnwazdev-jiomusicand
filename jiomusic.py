@@ -10,12 +10,13 @@ PLAYLIST_URL = "http://beatsapi.media.jio.com/v2_1/beats-api/jio/src/response/li
 ALBUM_URL = "http://beatsapi.media.jio.com/v2_1/beats-api/jio/src/response/albumsongs/albumid/{id}"
 STREAM_URL = "http://jiobeats.cdn.jio.com/mod/_definst_/mp4:hdindiamusic/audiofiles/{folder}/{album}/{id}_{bitrate}.mp4/playlist.m3u8"
 TIMEOUT = (4, 16)
+CATEGORIES = ("topquery", "songs", "albums", "playlists", "artists", "shows", "episodes")
 
 session = requests.Session()
 session.headers.update(
     {
         "Accept": "application/json",
-        "User-Agent": "shnwazdev-jiomusicand/2.0",
+        "User-Agent": "shnwazdev-jiomusicand/2.1",
     }
 )
 
@@ -146,6 +147,46 @@ def format_saavn_collection(item, collection_type):
     return payload
 
 
+def format_saavn_artist(item):
+    return {
+        "id": item.get("id"),
+        "title": clean(item.get("title")),
+        "subtitle": clean(item.get("description") or item.get("extra")),
+        "image": saavn_image_url(item.get("image")),
+        "type": item.get("type") or "artist",
+        "web_url": item.get("url"),
+        "position": item.get("position"),
+        "role": item.get("extra"),
+    }
+
+
+def format_saavn_generic(item, fallback_type):
+    return {
+        "id": item.get("id"),
+        "title": clean(item.get("title")),
+        "subtitle": clean(item.get("description") or item.get("album") or item.get("music")),
+        "image": saavn_image_url(item.get("image")),
+        "type": item.get("type") or fallback_type,
+        "web_url": item.get("url"),
+        "position": item.get("position"),
+    }
+
+
+def format_saavn_item(item, fallback_type):
+    item_type = item.get("type") or fallback_type
+
+    if item_type == "song":
+        return format_saavn_song(item)
+    if item_type == "album":
+        return format_saavn_collection(item, "album")
+    if item_type == "playlist":
+        return format_saavn_collection(item, "playlist")
+    if item_type == "artist":
+        return format_saavn_artist(item)
+
+    return format_saavn_generic(item, fallback_type)
+
+
 def legacy_song_search(query, include_details=False):
     normalized_query = quote_plus((query or "").strip())
     if not normalized_query:
@@ -171,8 +212,8 @@ def legacy_song_search(query, include_details=False):
     }
 
 
-def saavn_song_search(query):
-    results = fetch_json(
+def raw_autocomplete(query):
+    return fetch_json(
         JIOSAAVN_URL,
         params={
             "__call": "autocomplete.get",
@@ -181,6 +222,10 @@ def saavn_song_search(query):
             "query": query,
         },
     )
+
+
+def saavn_song_search(query):
+    results = raw_autocomplete(query)
 
     return {
         "songs": [
@@ -194,6 +239,22 @@ def saavn_song_search(query):
         "playlists": [
             format_saavn_collection(playlist, "playlist")
             for playlist in results.get("playlists", {}).get("data", [])
+        ],
+        "artists": [
+            format_saavn_artist(artist)
+            for artist in results.get("artists", {}).get("data", [])
+        ],
+        "topquery": [
+            format_saavn_item(item, "topquery")
+            for item in results.get("topquery", {}).get("data", [])
+        ],
+        "shows": [
+            format_saavn_generic(show, "show")
+            for show in results.get("shows", {}).get("data", [])
+        ],
+        "episodes": [
+            format_saavn_generic(episode, "episode")
+            for episode in results.get("episodes", {}).get("data", [])
         ],
     }
 

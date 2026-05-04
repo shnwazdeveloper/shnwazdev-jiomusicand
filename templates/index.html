@@ -16,6 +16,7 @@
     </a>
     <nav aria-label="Primary navigation">
       <a href="/docs">Docs</a>
+      <a href="/api">API</a>
       <a href="/api/health">Health</a>
       <a href="/api/search?query=slow%20motion">Try API</a>
     </nav>
@@ -41,9 +42,10 @@
   "ok": true,
   "query": "slow motion",
   "counts": {
-    "songs": 10,
-    "albums": 2,
-    "playlists": 4
+    "songs": 5,
+    "albums": 5,
+    "artists": 1,
+    "topquery": 1
   }
 }</pre>
       </div>
@@ -55,9 +57,25 @@
         <h2 id="console-title">Test a search</h2>
       </div>
       <form id="search-form" class="search-console">
-        <label for="query">Query</label>
         <div class="input-row">
-          <input id="query" name="query" type="search" value="slow motion" autocomplete="off" placeholder="Song, album, or playlist">
+          <label class="field" for="endpoint">
+            <span>Endpoint</span>
+            <select id="endpoint" name="endpoint">
+              <option value="/api/search">All results</option>
+              <option value="/api/songs">Songs</option>
+              <option value="/api/albums">Albums</option>
+              <option value="/api/playlists">Playlists</option>
+              <option value="/api/artists">Artists</option>
+              <option value="/api/top">Top results</option>
+              <option value="/api/shows">Shows</option>
+              <option value="/api/episodes">Episodes</option>
+              <option value="/api/raw/autocomplete">Raw autocomplete</option>
+            </select>
+          </label>
+          <label class="field" for="query">
+            <span>Query</span>
+            <input id="query" name="query" type="search" value="slow motion" autocomplete="off" placeholder="Song, album, artist, or playlist">
+          </label>
           <label class="toggle">
             <input id="details" name="details" type="checkbox">
             <span>Include album and playlist songs</span>
@@ -77,32 +95,20 @@
     <section class="endpoint-grid" aria-labelledby="endpoints-title">
       <div class="section-heading">
         <p class="eyebrow">Endpoints</p>
-        <h2 id="endpoints-title">API reference</h2>
+        <h2 id="endpoints-title">All routes</h2>
       </div>
+      {% for endpoint in endpoints %}
       <article class="endpoint-card">
         <div>
-          <span class="method">GET</span>
-          <code>/api/search</code>
+          <span class="method">{{ endpoint.method }}</span>
+          <code>{{ endpoint.path }}</code>
         </div>
-        <p>Modern search endpoint. Accepts <code>query</code> or <code>q</code>. Add <code>details=true</code> for album and playlist track lists.</p>
-        <pre>curl "http://localhost:5575/api/search?query=slow%20motion"</pre>
+        <h3>{{ endpoint.title }}</h3>
+        <p>{{ endpoint.description }}</p>
+        <pre>curl "http://localhost:5575{{ endpoint.example }}"</pre>
+        <a class="endpoint-link" href="{{ endpoint.example }}">Open endpoint</a>
       </article>
-      <article class="endpoint-card">
-        <div>
-          <span class="method">GET</span>
-          <code>/api/health</code>
-        </div>
-        <p>Health endpoint for Vercel checks and uptime monitors. Add <code>upstream=true</code> to test the JioMusic upstream.</p>
-        <pre>curl "http://localhost:5575/api/health"</pre>
-      </article>
-      <article class="endpoint-card">
-        <div>
-          <span class="method">GET</span>
-          <code>/result/</code>
-        </div>
-        <p>Compatibility route for old clients from the original project. Returns the raw result payload.</p>
-        <pre>curl "http://localhost:5575/result/?query=slow%20motion"</pre>
-      </article>
+      {% endfor %}
     </section>
   </main>
 
