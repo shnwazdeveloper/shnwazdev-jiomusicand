@@ -1,13 +1,16 @@
 import os
+import platform
 from datetime import datetime, timezone
+from pathlib import Path
 
-from flask import Flask, jsonify, render_template, request, send_from_directory
+from flask import Flask, jsonify, make_response, render_template, request, send_from_directory
 
 import jiomusic
 
 
 APP_NAME = "shnwazdev-jiomusicapi"
-APP_VERSION = "2.1.0"
+APP_VERSION = "2.2.0"
+PROJECT_ROOT = Path(__file__).resolve().parent
 
 app = Flask(__name__)
 app.config["JSON_SORT_KEYS"] = False
@@ -36,6 +39,13 @@ API_ENDPOINTS = [
     },
     {
         "method": "GET",
+        "path": "/api/ping",
+        "title": "Ping",
+        "description": "Fast uptime check that does not call the music upstream.",
+        "example": "/api/ping",
+    },
+    {
+        "method": "GET",
         "path": "/api/health",
         "title": "Health",
         "description": "Runtime status for uptime checks. Add upstream=true to test the live music upstream. Alias: /health.",
@@ -54,6 +64,13 @@ API_ENDPOINTS = [
         "title": "All search results",
         "description": "Combined search results for songs, albums, playlists, artists, top results, shows, and episodes.",
         "example": "/api/search?query=slow%20motion",
+    },
+    {
+        "method": "GET",
+        "path": "/api/summary",
+        "title": "Search summary",
+        "description": "Compact search response with counts, top result, and a small preview of each category.",
+        "example": "/api/summary?query=slow%20motion&limit=3",
     },
     {
         "method": "GET",
@@ -113,6 +130,13 @@ API_ENDPOINTS = [
     },
     {
         "method": "GET",
+        "path": "/api/diagnostics",
+        "title": "Deployment diagnostics",
+        "description": "Vercel-safe runtime checks for Python, required files, public assets, and route count.",
+        "example": "/api/diagnostics",
+    },
+    {
+        "method": "GET",
         "path": "/result/",
         "title": "Legacy result",
         "description": "Compatibility route for older clients from the original JioMusicAPI project.",
@@ -129,6 +153,17 @@ def parse_bool(value, default=False):
     if value is None:
         return default
     return str(value).strip().lower() in {"1", "true", "yes", "y", "on"}
+
+
+def parse_limit(default=3, maximum=10):
+    raw_limit = request.args.get("limit")
+    if raw_limit is None:
+        return default
+
+    try:
+        return max(1, min(int(raw_limit), maximum))
+    except ValueError:
+        return default
 
 
 def api_error(message, status_code=400, **extra):
@@ -166,6 +201,22 @@ def get_query():
     return (request.args.get("query") or request.args.get("q") or "").strip()
 
 
+def add_api_headers(response):
+    if request.path.startswith("/api/") or request.path in {"/api", "/result", "/result/", "/health"}:
+        response.headers.setdefault("Access-Control-Allow-Origin", "*")
+        response.headers.setdefault("Access-Control-Allow-Methods", "GET, OPTIONS")
+        response.headers.setdefault("Access-Control-Allow-Headers", "Content-Type")
+        response.headers.setdefault("Cache-Control", "no-store")
+    return response
+
+
+app.after_request(add_api_headers)
+
+
+def options_response():
+    return make_response("", 204)
+
+
 def search_response(legacy=False):
     query = get_query()
     include_details = parse_bool(request.args.get("details"), default=legacy)
@@ -190,6 +241,58 @@ def search_response(legacy=False):
             "details": include_details,
             "counts": summarize(data),
             "data": data,
+            "timestamp": utc_now(),
+        }
+    )
+
+
+def compact_item(item):
+    return {
+        "id": item.get("id"),
+        "title": item.get("title"),
+        "subtitle": item.get("subtitle"),
+        "artist": item.get("artist"),
+        "type": item.get("type"),
+        "image": item.get("image"),
+        "url": item.get("url"),
+        "web_url": item.get("web_url"),
+    }
+
+
+def summary_response():
+    query = get_query()
+    limit = parse_limit()
+
+    if not query:
+        return api_error("Add a query parameter, for example ?query=slow motion", 400)
+
+    try:
+        data = jiomusic.song_search(query=query, include_details=False)
+    except jiomusic.UpstreamError as exc:
+        return api_error(str(exc), 502, query=query)
+    except Exception:
+        return api_error("Unexpected server error while summarizing music.", 500, query=query)
+
+    previews = {
+        category: [compact_item(item) for item in items[:limit]]
+        for category, items in data.items()
+        if isinstance(items, list)
+    }
+    top_result = None
+    for category in ("topquery", "songs", "albums", "playlists", "artists"):
+        items = previews.get(category) or []
+        if items:
+            top_result = items[0]
+            break
+
+    return jsonify(
+        {
+            "ok": True,
+            "query": query,
+            "limit": limit,
+            "counts": summarize(data),
+            "top_result": top_result,
+            "preview": previews,
             "timestamp": utc_now(),
         }
     )
@@ -225,6 +328,34 @@ def category_response(category, public_name=None):
             "timestamp": utc_now(),
         }
     )
+
+
+def diagnostics_payload():
+    public_files = ["app.js", "favicon.svg", "styles.css"]
+    required_files = ["app.py", "requirements.txt", "vercel.json", ".python-version"]
+
+    return {
+        "ok": True,
+        "service": APP_NAME,
+        "version": APP_VERSION,
+        "python": platform.python_version(),
+        "vercel": {
+            "detected": os.environ.get("VERCEL") == "1",
+            "environment": os.environ.get("VERCEL_ENV"),
+            "region": os.environ.get("VERCEL_REGION"),
+            "url": os.environ.get("VERCEL_URL"),
+        },
+        "required_files": {
+            name: (PROJECT_ROOT / name).exists()
+            for name in required_files
+        },
+        "public_assets": {
+            name: (PROJECT_ROOT / "public" / name).exists()
+            for name in public_files
+        },
+        "endpoint_count": len(API_ENDPOINTS),
+        "timestamp": utc_now(),
+    }
 
 
 def raw_autocomplete_response():
@@ -276,9 +407,27 @@ def api_index():
     )
 
 
+@app.get("/api/ping")
+def api_ping():
+    return jsonify(
+        {
+            "ok": True,
+            "message": "pong",
+            "service": APP_NAME,
+            "version": APP_VERSION,
+            "timestamp": utc_now(),
+        }
+    )
+
+
 @app.get("/api/search")
 def api_search():
     return search_response(legacy=False)
+
+
+@app.get("/api/summary")
+def api_summary():
+    return summary_response()
 
 
 @app.get("/api/songs")
@@ -328,6 +477,11 @@ def api_raw_autocomplete():
     return raw_autocomplete_response()
 
 
+@app.get("/api/diagnostics")
+def api_diagnostics():
+    return jsonify(diagnostics_payload())
+
+
 @app.get("/result")
 @app.get("/result/")
 def legacy_result():
@@ -373,6 +527,14 @@ def script():
 @app.get("/favicon.svg")
 def favicon():
     return send_from_directory("public", "favicon.svg")
+
+
+@app.route("/api/<path:_path>", methods=["OPTIONS"])
+@app.route("/api", methods=["OPTIONS"])
+@app.route("/result", methods=["OPTIONS"])
+@app.route("/result/", methods=["OPTIONS"])
+def options_handler(_path=None):
+    return options_response()
 
 
 @app.errorhandler(404)

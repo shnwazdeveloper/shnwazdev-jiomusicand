@@ -8,9 +8,12 @@ Repository: `shnwazdeveloper/shnwazdev-jiomusicapi`
 
 - Documentation homepage at `/` and `/docs`
 - Endpoint index at `/api`
+- Fast uptime endpoint at `/api/ping`
 - Modern search endpoint at `/api/search`
+- Compact search summary endpoint at `/api/summary`
 - Category endpoints for songs, albums, playlists, artists, top results, shows, and episodes
 - Raw autocomplete endpoint at `/api/raw/autocomplete`
+- Deployment diagnostics endpoint at `/api/diagnostics`
 - Health endpoints at `/api/health` and `/health`
 - Legacy compatibility route at `/result/`
 - Vercel-ready Flask entrypoint in `app.py`
@@ -28,9 +31,23 @@ python app.py
 
 Open `http://localhost:5575`.
 
+Run the smoke test:
+
+```powershell
+python scripts/smoke_test.py
+```
+
 ## API
 
 All endpoints accept `query` or `q` where search text is needed.
+
+### Ping
+
+```http
+GET /api/ping
+```
+
+Returns a fast no-upstream `pong` response for uptime monitors.
 
 ### Endpoint index
 
@@ -50,6 +67,14 @@ Optional parameters:
 
 - `query` or `q`: song, album, artist, playlist, show, or episode search text
 - `details=true`: include album and playlist track lists
+
+### Search summary
+
+```http
+GET /api/summary?query=slow%20motion&limit=3
+```
+
+Returns counts, the top result, and a compact preview for each category. `limit` can be `1` to `10`.
 
 ### Category endpoints
 
@@ -95,6 +120,14 @@ GET /api/raw/autocomplete?query=slow%20motion
 
 Returns the unmodified upstream autocomplete response.
 
+### Deployment diagnostics
+
+```http
+GET /api/diagnostics
+```
+
+Checks Python, Vercel environment markers, required files, public assets, and endpoint count without exposing secrets.
+
 ### Legacy route
 
 ```http
@@ -105,7 +138,7 @@ This keeps old clients working by returning the raw payload.
 
 ## Deploy to Vercel
 
-Vercel can detect the Flask app from `app.py` and install `requirements.txt`.
+Vercel can detect the Flask app from `app.py` and install `requirements.txt`. The project also includes `vercel.json`, `.vercelignore`, and `.python-version` for predictable Vercel hosting.
 
 ```powershell
 npx vercel@latest
@@ -121,6 +154,8 @@ After deployment, check:
 
 ```text
 https://your-project.vercel.app/api/health
+https://your-project.vercel.app/api/ping
+https://your-project.vercel.app/api/diagnostics
 https://your-project.vercel.app/api/search?query=slow%20motion
 https://your-project.vercel.app/api
 ```
