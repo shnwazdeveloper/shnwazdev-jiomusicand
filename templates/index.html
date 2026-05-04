@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ app_name }} API</title>
+  <meta name="description" content="Clean documentation and health dashboard for the JioMusic search API.">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="{{ app_name }} home">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <span>{{ app_name }}</span>
+    </a>
+    <nav aria-label="Primary navigation">
+      <a href="/docs">Docs</a>
+      <a href="/api/health">Health</a>
+      <a href="/api/search?query=slow%20motion">Try API</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">Unofficial JioMusic search API</p>
+        <h1>Music metadata, preview links, and health checks from one Flask API.</h1>
+        <p class="lead">A Vercel-ready API wrapper with JSON endpoints, legacy route support, and a simple testing console for song, album, and playlist searches.</p>
+        <div class="hero-actions">
+          <a class="button primary" href="/api/search?query=slow%20motion">Open sample JSON</a>
+          <a class="button secondary" href="/api/health">Check health</a>
+        </div>
+      </div>
+      <div class="visual-panel" aria-label="API response preview">
+        <div class="waveform" aria-hidden="true">
+          <span></span><span></span><span></span><span></span><span></span><span></span>
+          <span></span><span></span><span></span><span></span><span></span><span></span>
+        </div>
+        <pre>{
+  "ok": true,
+  "query": "slow motion",
+  "counts": {
+    "songs": 10,
+    "albums": 2,
+    "playlists": 4
+  }
+}</pre>
+      </div>
+    </section>
+
+    <section class="console-section" aria-labelledby="console-title">
+      <div class="section-heading">
+        <p class="eyebrow">Live console</p>
+        <h2 id="console-title">Test a search</h2>
+      </div>
+      <form id="search-form" class="search-console">
+        <label for="query">Query</label>
+        <div class="input-row">
+          <input id="query" name="query" type="search" value="slow motion" autocomplete="off" placeholder="Song, album, or playlist">
+          <label class="toggle">
+            <input id="details" name="details" type="checkbox">
+            <span>Include album and playlist songs</span>
+          </label>
+          <button type="submit">Send</button>
+        </div>
+      </form>
+      <div class="result-shell">
+        <div class="result-meta">
+          <span id="result-status">Ready</span>
+          <a id="result-link" href="/api/search?query=slow%20motion">/api/search?query=slow%20motion</a>
+        </div>
+        <pre id="result-output">Submit a query to preview the JSON response.</pre>
+      </div>
+    </section>
+
+    <section class="endpoint-grid" aria-labelledby="endpoints-title">
+      <div class="section-heading">
+        <p class="eyebrow">Endpoints</p>
+        <h2 id="endpoints-title">API reference</h2>
+      </div>
+      <article class="endpoint-card">
+        <div>
+          <span class="method">GET</span>
+          <code>/api/search</code>
+        </div>
+        <p>Modern search endpoint. Accepts <code>query</code> or <code>q</code>. Add <code>details=true</code> for album and playlist track lists.</p>
+        <pre>curl "http://localhost:5575/api/search?query=slow%20motion"</pre>
+      </article>
+      <article class="endpoint-card">
+        <div>
+          <span class="method">GET</span>
+          <code>/api/health</code>
+        </div>
+        <p>Health endpoint for Vercel checks and uptime monitors. Add <code>upstream=true</code> to test the JioMusic upstream.</p>
+        <pre>curl "http://localhost:5575/api/health"</pre>
+      </article>
+      <article class="endpoint-card">
+        <div>
+          <span class="method">GET</span>
+          <code>/result/</code>
+        </div>
+        <p>Compatibility route for old clients from the original project. Returns the raw result payload.</p>
+        <pre>curl "http://localhost:5575/result/?query=slow%20motion"</pre>
+      </article>
+    </section>
+  </main>
+
+  <footer>
+    <span>{{ app_name }} v{{ app_version }}</span>
+    <span>Ready for Vercel. Local port: 5575.</span>
+    <span>&copy; {{ year }}</span>
+  </footer>
+
+  <script src="/app.js" defer></script>
+</body>
+</html>

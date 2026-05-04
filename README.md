@@ -1,72 +1,92 @@
-## JioMusic API [Deprecated]
+# shnwazdev-jiomusicand
 
+Clean Flask API and documentation website for the legacy JioMusic search API. This repo is based on `cyberboysumanjay/JioMusicAPI` and modernized for local development and Vercel deployment.
 
-### Show some :heart: and :star: the repo to support the project
+## What is included
 
-[![GitHub stars](https://img.shields.io/github/stars/cyberboysumanjay/jiomusicapi.svg?style=social&label=Star)](https://github.com/cyberboysumanjay/JioMusicAPI)
-![GitHub followers](https://img.shields.io/github/followers/cyberboysumanjay.svg?style=social&label=Follow)
-[![Twitter Follow](https://img.shields.io/twitter/follow/cyberboysj.svg?style=social)](https://twitter.com/CyberboySj)
+- Documentation homepage at `/` and `/docs`
+- Modern search endpoint at `/api/search`
+- Health endpoint at `/api/health`
+- Legacy compatibility route at `/result/`
+- Vercel-ready Flask entrypoint in `app.py`
+- Local development port set to `5575`
 
-#### JioMusic API written in Python using Flask  
-![JioMusic](https://telegra.ph/file/a053512b3f86018f275a2.png)
- ---
-###### **NOTE:** You don't need to have JioMusic link of the song in order to fetch the song details, you can directly search Songs/Albums/Playlists by their name using this API.  
+## Run locally
 
- ---
-
-#### Features:
-##### Currently the API can get the following details for a specific song in JSON format:
-- **Song Name**
-- **Singer Name**
-- **Album Name**
-- **Song Thumbnail URL (Max Resolution)**
-- **Streamable Link (320Kbps)**
-- **Album Art Link (Max Resolution)**
-- .... and much more!
-
-```json
-{
-    "songs":
-        {
-          "albumid": "1734322",
-          "artist": "Shreya Ghoshal, NAKASH AZIZ",
-          "id": "1735_1734322_1",
-          "image": "http://jioimages.cdn.jio.com/hdindiamusic/images/1735/1734322/1734322_1556177408_800x800.jpg",
-          "s_order": "286",
-          "subtitle": "Bharat",
-          "title": "Slow Motion",
-          "type": "songs",
-          "url": "http://jiobeats.cdn.jio.com/mod/_definst_/mp4:hdindiamusic/audiofiles/1735/1734322/1735_1734322_1_320.mp4/playlist.m3u8"
-        }
-}
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+$env:PORT = "5575"
+python app.py
 ```
 
-#### Installation:
+Open `http://localhost:5575`.
 
-Clone this repository using
-```sh
-$ git clone https://github.com/cyberboysumanjay/JioMusicAPI
+## API
+
+### Search
+
+```http
+GET /api/search?query=slow%20motion
 ```
-Enter the directory and install all the requirements using
-```sh
-$ pip3 install -r requirements.txt
+
+Optional parameters:
+
+- `query` or `q`: song, album, or playlist search text
+- `details=true`: include album and playlist track lists
+
+Example:
+
+```powershell
+curl "http://localhost:5575/api/search?query=slow%20motion"
 ```
-Run the app using
-```sh
-$ python3 app.py
+
+### Health
+
+```http
+GET /api/health
 ```
-Navigate to 127.0.0.1:5000 to see the Homepage
 
-#### Usage:
-```sh
-http://127.0.0.1:5000/result/?query=<insert-song-or-playlist-or-album-name-here>
+Use `upstream=true` to include a live upstream check:
+
+```powershell
+curl "http://localhost:5575/api/health?upstream=true"
 ```
-**Example:** Navigate to http://127.0.0.1:5000/result/?query=slow%20motion to get a json response of song data in return.
-**Live Example:** Navigate to https://jiomusic.herokuapp.com/result/?query=slow%20motion and see yourself! (Maybe Slow, Thanks to Heroku!)
-### You can fork the repo and deploy on VPS or deploy it on Heroku :)  
-[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/cyberboysumanjay/JioMusicAPI/tree/master)
 
+### Legacy route
 
-#### Star the Repo in case you liked it :)
+```http
+GET /result/?query=slow%20motion
+```
 
-# © [Sumanjay](https://cyberboysumanjay.github.io)
+This keeps old clients working by returning the raw payload.
+
+## Deploy to Vercel
+
+Vercel can detect the Flask app from `app.py` and install `requirements.txt`.
+
+```powershell
+npx vercel@latest
+```
+
+For production:
+
+```powershell
+npx vercel@latest --prod
+```
+
+After deployment, check:
+
+```text
+https://your-project.vercel.app/api/health
+https://your-project.vercel.app/api/search?query=slow%20motion
+```
+
+## Notes
+
+The original JioMusic `beatsapi.media.jio.com` endpoint is legacy and may fail or return unavailable responses. The app now falls back to JioSaavn autocomplete so search stays usable, and it returns clear JSON errors if every upstream is unavailable.
+
+## Attribution
+
+Original project: `cyberboysumanjay/JioMusicAPI`
