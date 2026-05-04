@@ -138,7 +138,9 @@ This keeps old clients working by returning the raw payload.
 
 ## Deploy to Vercel
 
-Vercel can detect the Flask app from `app.py` and install `requirements.txt`. The project also includes `vercel.json`, `.vercelignore`, and `.python-version` for predictable Vercel hosting.
+Vercel can detect the Flask app from the root `app.py` file and install `requirements.txt`. The project also includes `vercel.json`, `.vercelignore`, and `.python-version` for predictable Vercel hosting.
+
+The `vercel.json` file intentionally does not define `functions.app.py`. Root Flask apps are handled by Vercel's Flask framework detection, while the `functions` property only targets function files such as files inside `/api`.
 
 ```powershell
 npx vercel@latest
