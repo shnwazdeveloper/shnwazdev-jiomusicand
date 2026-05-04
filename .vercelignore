@@ -1,0 +1,8 @@
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.log
+localhost-*.png
+.pytest_cache/
+.mypy_cache/
