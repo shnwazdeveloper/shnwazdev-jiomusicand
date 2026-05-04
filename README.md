@@ -1,6 +1,8 @@
-# shnwazdev-jiomusicand
+# shnwazdev-jiomusicapi
 
 Clean Flask API and documentation website for the legacy JioMusic search API. This repo is based on `cyberboysumanjay/JioMusicAPI` and modernized for local development and Vercel deployment.
+
+Repository: `shnwazdeveloper/shnwazdev-jiomusicapi`
 
 ## What is included
 

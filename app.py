@@ -6,7 +6,7 @@ from flask import Flask, jsonify, render_template, request, send_from_directory
 import jiomusic
 
 
-APP_NAME = "shnwazdev-jiomusicand"
+APP_NAME = "shnwazdev-jiomusicapi"
 APP_VERSION = "2.1.0"
 
 app = Flask(__name__)

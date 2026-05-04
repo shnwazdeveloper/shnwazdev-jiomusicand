@@ -16,7 +16,7 @@ session = requests.Session()
 session.headers.update(
     {
         "Accept": "application/json",
-        "User-Agent": "shnwazdev-jiomusicand/2.1",
+        "User-Agent": "shnwazdev-jiomusicapi/2.1",
     }
 )
 
