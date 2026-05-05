@@ -71,10 +71,10 @@ Optional parameters:
 ### Search summary
 
 ```http
-GET /api/summary?query=slow%20motion&limit=3
+GET /api/summary?query=slow%20motion
 ```
 
-Returns counts, the top result, and a compact preview for each category. `limit` can be `1` to `10`.
+Returns counts, the top result, and every upstream item for each category by default. `limit` is optional and has no server-side maximum; use `limit=3` only when you want a smaller preview. You can also use `limit=all`, `limit=unlimited`, or `limit=0` to request every available item explicitly.
 
 ### Category endpoints
 

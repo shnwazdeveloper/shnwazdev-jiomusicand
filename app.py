@@ -9,7 +9,7 @@ import jiomusic
 
 
 APP_NAME = "shnwazdev-jiomusicapi"
-APP_VERSION = "2.2.0"
+APP_VERSION = "2.2.1"
 PROJECT_ROOT = Path(__file__).resolve().parent
 
 app = Flask(__name__)
@@ -69,8 +69,8 @@ API_ENDPOINTS = [
         "method": "GET",
         "path": "/api/summary",
         "title": "Search summary",
-        "description": "Compact search response with counts, top result, and a small preview of each category.",
-        "example": "/api/summary?query=slow%20motion&limit=3",
+        "description": "Unlimited search summary with counts, top result, and every upstream item unless limit is supplied.",
+        "example": "/api/summary?query=slow%20motion",
     },
     {
         "method": "GET",
@@ -155,15 +155,19 @@ def parse_bool(value, default=False):
     return str(value).strip().lower() in {"1", "true", "yes", "y", "on"}
 
 
-def parse_limit(default=3, maximum=10):
+def parse_limit():
     raw_limit = request.args.get("limit")
     if raw_limit is None:
-        return default
+        return None
+
+    normalized_limit = str(raw_limit).strip().lower()
+    if normalized_limit in {"", "0", "all", "none", "unlimited"}:
+        return None
 
     try:
-        return max(1, min(int(raw_limit), maximum))
+        return max(1, int(normalized_limit))
     except ValueError:
-        return default
+        return None
 
 
 def api_error(message, status_code=400, **extra):
@@ -274,7 +278,7 @@ def summary_response():
         return api_error("Unexpected server error while summarizing music.", 500, query=query)
 
     previews = {
-        category: [compact_item(item) for item in items[:limit]]
+        category: [compact_item(item) for item in (items if limit is None else items[:limit])]
         for category, items in data.items()
         if isinstance(items, list)
     }
@@ -290,6 +294,7 @@ def summary_response():
             "ok": True,
             "query": query,
             "limit": limit,
+            "unlimited": limit is None,
             "counts": summarize(data),
             "top_result": top_result,
             "preview": previews,

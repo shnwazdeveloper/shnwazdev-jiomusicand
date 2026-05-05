@@ -18,7 +18,8 @@ CHECKS = [
     ("/api/health", 200),
     ("/health", 200),
     ("/api/search?query=slow%20motion", 200),
-    ("/api/summary?query=slow%20motion&limit=2", 200),
+    ("/api/summary?query=slow%20motion", 200),
+    ("/api/summary?query=slow%20motion&limit=250", 200),
     ("/api/songs?query=slow%20motion", 200),
     ("/api/albums?query=slow%20motion", 200),
     ("/api/playlists?query=bollywood", 200),
@@ -53,6 +54,12 @@ def main():
             failures.append("/api returned an unexpected service name")
         if len(api_payload.get("endpoints", [])) < 18:
             failures.append("/api returned fewer endpoints than expected")
+        unlimited_payload = client.get("/api/summary?query=slow%20motion").get_json()
+        high_limit_payload = client.get("/api/summary?query=slow%20motion&limit=250").get_json()
+        if unlimited_payload.get("unlimited") is not True or unlimited_payload.get("limit") is not None:
+            failures.append("/api/summary should be unlimited when limit is omitted")
+        if high_limit_payload.get("limit") != 250:
+            failures.append("/api/summary still appears to cap high limit values")
         if not all(diagnostics_payload.get("required_files", {}).values()):
             failures.append("/api/diagnostics reported missing required files")
         if not all(diagnostics_payload.get("public_assets", {}).values()):
